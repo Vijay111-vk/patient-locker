@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status, message_card %}
+{% block title %}Query for {{ p.full_name }}{% endblock %}
+{% block content %}
+<div class="pagehead" {% if q.status in IN_PROGRESS %}data-watch="/queries/{{ q.id }}/status"{% endif %}>
+  <div>
+    <div class="crumbs"><a href="/dashboard">Patients</a> / <a href="/patients/{{ p.id }}">{{ p.full_name }}</a></div>
+    <h1>{{ q.insurer_name or 'Insurer query' }}</h1>
+    <p class="sub">Letter <a href="/queries/{{ q.id }}/file" target="_blank" rel="noopener">{{ q.original_name }}</a>, uploaded {{ q.uploaded_at | local }} by {{ q.uploaded_by }}</p>
+  </div>
+  <div>{{ status(q.status) }}</div>
+</div>
+
+{% if q.error %}<div class="flash error">{{ q.error }}</div>{% endif %}
+
+<section class="panel">
+  <dl class="facts" style="grid-template-columns:max-content 1fr max-content 1fr">
+    <dt>Claim ref.</dt><dd>{{ q.claim_reference or p.claim_number or '—' }}</dd>
+    <dt>Deadline</dt><dd>{{ q.deadline or 'Not stated' }}</dd>
+    <dt>Points found</dt><dd>{{ q.points|length }} ({{ q.needed_points|length }} from patient, {{ q.available_points|length }} already in locker)</dd>
+    <dt>Upload to message</dt><dd>{{ '%s seconds' % q.seconds_to_send if q.seconds_to_send is not none else '—' }}</dd>
+  </dl>
+  {% if q.timings %}
+  <ul class="steps" style="margin-top:.7rem">
+    {% for k, v in q.timings.items() %}<li>{{ k.replace('_', ' ') }} <b>{{ v }} s</b></li>{% endfor %}
+    {% if q.engine %}<li>engine <b>{{ q.engine }}</b></li>{% endif %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <header><h2>What the insurer asked, and what we decided</h2></header>
+  {% if q.status in IN_PROGRESS and not q.points %}
+    <p class="empty">Reading the letter and checking the locker. This page updates by itself.</p>
+  {% endif %}
+  <ol class="ledger">
+  {% for pt in q.points %}
+    <li>
+      <div class="ref">{{ pt.ref }}</div>
+      <div>
+        <blockquote>{{ pt.insurer_text }}</blockquote>
+        {% if pt.reason %}<p class="why">{{ pt.reason }}</p>{% endif %}
+        {% if pt.matched_document_ids %}
+          <div class="tabs">{% for did in pt.matched_document_ids %}{% set d = docs_by_id.get(did) %}{% if d %}<a class="tab" href="/documents/{{ d.id }}/file" target="_blank" rel="noopener" title="{{ d.original_name }}">{{ d.doc_type | doc_label }}</a>{% endif %}{% endfor %}</div>
+        {% endif %}
+        {% if pt.decision == 'needed' %}
+          <p class="ask"><b>Asked the patient for:</b> {{ pt.patient_request }}{% if pt.patient_reason %} <span class="muted">({{ pt.patient_reason }})</span>{% endif %}</p>
+        {% endif %}
+      </div>
+      {% if pt.resolved_after_message %}
+        <div class="stamp resolved">Received<small>after message</small></div>
+      {% elif pt.decision == 'available' %}
+        <div class="stamp available">In locker<small>no need to ask</small></div>
+      {% elif pt.decision == 'needed' %}
+        <div class="stamp needed">Ask patient<small>{{ 'clarification' if pt.kind == 'clarification' else 'document needed' }}</small></div>
+      {% else %}
+        <div class="stamp pending">Pending</div>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</section>
+
+<div class="grid-2">
+  <section class="panel">
+    <header><h2>Messages for this query</h2></header>
+    {% for m in q.messages|reverse %}{{ message_card(m) }}{% else %}<p class="empty">{{ 'Sending…' if q.status in IN_PROGRESS else 'No messages sent for this query.' }}</p>{% endfor %}
+  </section>
+  <section class="panel">
+    <header><h2>Actions</h2></header>
+    <p><small>Everything above happened automatically. Use these only to correct something.</small></p>
+    <form method="post" action="/queries/{{ q.id }}/reprocess" class="field">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <label style="font-weight:500"><input type="checkbox" name="send" value="1"> Also send a fresh message to the patient</label>
+      <button class="btn ghost small">Check this letter again</button>
+    </form>
+    {% if q.points %}
+    <form method="post" action="/queries/{{ q.id }}/send" data-confirm="Send the message to the patient again on WhatsApp and email?">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <button class="btn ghost small">Send the message again</button>
+    </form>
+    {% endif %}
+    <details style="margin-top:1rem"><summary>Text read from the letter</summary>
+      <div class="lettertext" style="margin-top:.5rem">{{ q.extracted_text or '(no text yet)' }}</div>
+    </details>
+  </section>
+</div>
+{% endblock %}

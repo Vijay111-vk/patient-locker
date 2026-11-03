@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status %}
+{% block title %}Patients{% endblock %}
+{% block content %}
+<div class="pagehead" {% if any_running %}data-poll="/dashboard"{% endif %}>
+  <div>
+    <h1>Patients</h1>
+    <p class="sub">Upload an insurer query letter to a patient’s locker. The patient is messaged automatically.</p>
+  </div>
+  <a class="btn" href="/patients/new">Add patient</a>
+</div>
+
+<ul class="stats">
+  <li><b>{{ stats.patients }}</b><span>patients</span></li>
+  <li><b>{{ stats.waiting }}</b><span>queries waiting on patients</span></li>
+  <li class="{{ 'warn' if stats.attention else '' }}"><b>{{ stats.attention }}</b><span>queries need a look</span></li>
+  <li><b>{{ stats.sent_24h }}</b><span>messages in last 24 h</span></li>
+  <li><b>{{ '%.1f s' % stats.avg_seconds if stats.avg_seconds else '—' }}</b><span>average upload to message</span></li>
+</ul>
+
+<div class="grid-side">
+  <section class="panel">
+    <header>
+      <h2>All patients</h2>
+      <form method="get" action="/dashboard" class="row" role="search">
+        <label class="sr-only" for="q">Search patients</label>
+        <input id="q" type="text" name="q" value="{{ q }}" placeholder="Name, ID, claim or policy no.">
+        <button class="btn ghost small">Search</button>
+      </form>
+    </header>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Patient</th><th>Insurer</th><th class="num">Docs</th><th>Latest query</th><th class="num">Open items</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr class="rowlink">
+          <td><a href="/patients/{{ r.p.id }}"><b>{{ r.p.full_name }}</b></a><br><small class="nowrap">{{ r.p.patient_code }}</small>{% if r.p.claim_number %} <small class="nowrap">{{ r.p.claim_number }}</small>{% endif %}</td>
+          <td>{{ r.p.insurer or '—' }}</td>
+          <td class="num">{{ r.docs }}</td>
+          <td>{% if r.latest %}<a href="/queries/{{ r.latest.id }}">{{ status(r.latest.status) }}</a><br><small>{{ r.latest.uploaded_at | local('%d %b, %I:%M %p') }}</small>{% else %}<small class="muted">No queries yet</small>{% endif %}</td>
+          <td class="num">{% if r.open_items %}<b style="color:var(--amber)">{{ r.open_items }}</b>{% else %}<span class="muted">0</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">{% if q %}No patient matches “{{ q }}”.{% else %}No patients yet. <a href="/patients/new">Add the first patient</a>.{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header><h2>Latest query letters</h2></header>
+    {% for qq in recent %}
+      <div style="padding:.55rem 0;border-bottom:1px solid var(--line)">
+        <div class="row" style="justify-content:space-between">
+          <a href="/queries/{{ qq.id }}"><b>{{ qq.patient.full_name }}</b></a>{{ status(qq.status) }}
+        </div>
+        <small>{{ qq.insurer_name or qq.original_name }}<br>
+        {{ qq.uploaded_at | local('%d %b, %I:%M %p') }}{% if qq.points %}, {{ qq.needed_points|length }} of {{ qq.points|length }} points need the patient{% endif %}{% if qq.seconds_to_send %}, sent in {{ qq.seconds_to_send }} s{% endif %}</small>
+      </div>
+    {% else %}
+      <p class="empty">No query letters yet. Open a patient and upload one.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

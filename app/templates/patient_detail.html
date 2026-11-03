@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status, message_card %}
+{% block title %}{{ p.full_name }}{% endblock %}
+{% block content %}
+<div class="pagehead" {% if running %}data-watch="/patients/{{ p.id }}/status"{% endif %}>
+  <div>
+    <div class="crumbs"><a href="/dashboard">Patients</a></div>
+    <h1>{{ p.full_name }}</h1>
+    <p class="sub">{{ p.patient_code }}{% if p.insurer %}, {{ p.insurer }}{% endif %}{% if p.claim_number %}, claim {{ p.claim_number }}{% endif %}</p>
+  </div>
+  <a class="btn ghost" href="/patients/{{ p.id }}/edit">Edit profile</a>
+</div>
+
+<div class="grid-side">
+  <div>
+    <section class="panel" id="queries">
+      <header><h2>Insurer queries ({{ p.queries|length }})</h2><small>Upload a letter and the patient is messaged without any other step</small></header>
+      <form class="drop query" method="post" action="/patients/{{ p.id }}/queries" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <p><b>Add a query letter</b> — the system reads it, checks this locker, and sends WhatsApp and email.</p>
+        <div class="row">
+          <label class="sr-only" for="qfile">Query letter file</label>
+          <input id="qfile" type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff,.txt,.docx">
+          <button class="btn small">Upload and process</button>
+        </div>
+      </form>
+      <div class="table-wrap" style="margin-top:.8rem">
+      <table>
+        <thead><tr><th>Letter</th><th>Status</th><th>Points</th><th>Upload to message</th></tr></thead>
+        <tbody>
+        {% for q in p.queries %}
+          <tr class="rowlink">
+            <td><a href="/queries/{{ q.id }}"><b>{{ q.insurer_name or q.original_name }}</b></a><br><small>{{ q.uploaded_at | local }}</small></td>
+            <td>{{ status(q.status) }}</td>
+            <td>{% if q.points %}{{ q.points|length }} total<br><small>{{ q.needed_points|length }} from patient, {{ q.available_points|length }} in locker</small>{% else %}—{% endif %}</td>
+            <td>{{ '%s s' % q.seconds_to_send if q.seconds_to_send is not none else '—' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="empty">No query letters yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    {% include "_documents.html" %}
+  </div>
+
+  <aside>
+    <section class="panel">
+      <header><h2>Profile</h2></header>
+      <dl class="facts">
+        <dt>WhatsApp</dt><dd>{{ p.phone or '—' }}</dd>
+        <dt>Email</dt><dd>{{ p.email or '—' }}</dd>
+        <dt>Date of birth</dt><dd>{{ p.dob or '—' }}</dd>
+        <dt>Hospital</dt><dd>{{ p.hospital or '—' }}</dd>
+        <dt>Policy no.</dt><dd>{{ p.policy_number or '—' }}</dd>
+        <dt>Admitted</dt><dd>{{ p.admission_date or '—' }}</dd>
+        <dt>Discharged</dt><dd>{{ p.discharge_date or '—' }}</dd>
+        <dt>Diagnosis</dt><dd>{{ p.diagnosis or '—' }}</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <header><h2>Waiting on the patient</h2></header>
+      {% for q, pt in open_needs %}
+        <p style="margin-bottom:.6rem"><b>{{ pt.patient_request }}</b><br><small><a href="/queries/{{ q.id }}">Query {{ q.uploaded_at | local('%d %b') }}</a>, point {{ pt.ref }}</small></p>
+      {% else %}
+        <p class="empty">Nothing outstanding.</p>
+      {% endfor %}
+    </section>
+
+    <section class="panel" id="messages">
+      <header><h2>Messages sent ({{ p.messages|length }})</h2></header>
+      {% for m in p.messages[:6] %}{{ message_card(m) }}{% else %}<p class="empty">No messages yet.</p>{% endfor %}
+      {% if p.messages|length > 6 %}<p><small>Older messages are on each query page.</small></p>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

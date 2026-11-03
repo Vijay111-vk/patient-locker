@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Sign in to Patient Locker{% endblock %}
+{% block content %}
+<div class="login">
+  <h1>Patient Locker</h1>
+  <p class="muted">Sign in to see claim documents and insurer queries.</p>
+  <div class="panel">
+    <form method="post" action="/login">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field"><label for="u">Username</label><input id="u" type="text" name="username" autocomplete="username" required autofocus></div>
+      <div class="field"><label for="p">Password</label><input id="p" type="password" name="password" autocomplete="current-password" required></div>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

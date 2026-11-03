@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import message_card %}
+{% block title %}My claim locker{% endblock %}
+{% block content %}
+<div class="pagehead" {% if running %}data-watch="/patients/{{ p.id }}/status"{% endif %}>
+  <div>
+    <h1>Hello, {{ p.full_name.split()[0] }}</h1>
+    <p class="sub">Your claim documents and messages, in one place. Patient ID {{ p.patient_code }}.</p>
+  </div>
+</div>
+
+<section class="panel">
+  <header><h2>What we need from you</h2></header>
+  {% if open_needs %}
+    <ol style="margin:0;padding-left:1.2rem">
+    {% for q, pt in open_needs %}
+      <li style="margin-bottom:.6rem"><b>{{ pt.patient_request }}</b>{% if pt.patient_reason %}<br><small>Why: {{ pt.patient_reason }}</small>{% endif %}</li>
+    {% endfor %}
+    </ol>
+    <p style="margin-top:.8rem">Upload them below as photos or PDFs. We check them automatically.</p>
+  {% else %}
+    <p class="empty">Nothing right now. We will message you if your insurer asks for anything.</p>
+  {% endif %}
+</section>
+
+<div class="grid-2">
+  {% include "_documents.html" %}
+  <section class="panel">
+    <header><h2>Insurer queries</h2></header>
+    {% for q in p.queries %}
+      <div id="query-{{ q.id }}" style="padding:.5rem 0;border-bottom:1px solid var(--line)">
+        <b>{{ q.insurer_name or 'Insurer query' }}</b>, received {{ q.uploaded_at | local('%d %b %Y') }}<br>
+        <small>{% if q.status == 'complete' or q.status == 'no_action' %}Nothing more needed from you{% elif q.needed_points %}{{ q.needed_points|length }} item(s) needed from you{% else %}Being checked{% endif %}
+        — <a href="/queries/{{ q.id }}/file" target="_blank" rel="noopener">view letter</a></small>
+      </div>
+    {% else %}<p class="empty">No queries from your insurer.</p>{% endfor %}
+    <h2 style="margin:1.2rem 0 .8rem">Messages we sent you</h2>
+    {% for m in p.messages %}{{ message_card(m, show_recipient=False) }}{% else %}<p class="empty">No messages yet.</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

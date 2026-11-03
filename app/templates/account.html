@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="pagehead"><div><h1>Your account</h1><p class="sub">Signed in as {{ user.username }} ({{ user.role }})</p></div></div>
+<div class="panel" style="max-width:480px">
+  <header><h2>Change password</h2></header>
+  <form method="post" action="/account/password">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <div class="field"><label for="c">Current password</label><input id="c" type="password" name="current" required autocomplete="current-password"></div>
+    <div class="field"><label for="n">New password (8+ characters)</label><input id="n" type="password" name="new" minlength="8" required autocomplete="new-password"></div>
+    <button class="btn">Change password</button>
+  </form>
+</div>
+{% endblock %}

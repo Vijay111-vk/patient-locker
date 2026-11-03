@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ' + patient.full_name if patient else 'Add patient' }}{% endblock %}
+{% block content %}
+<div class="pagehead"><div>
+  {% if patient %}<div class="crumbs"><a href="/patients/{{ patient.id }}">{{ patient.full_name }}</a></div>{% endif %}
+  <h1>{{ 'Edit profile' if patient else 'Add patient' }}</h1>
+  <p class="sub">Phone and email are where query messages are sent.</p>
+</div></div>
+<form method="post" class="panel" action="{{ '/patients/%d/edit' % patient.id if patient else '/patients/new' }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf }}">
+  {% set v = patient %}
+  <div class="form-grid">
+    <div class="field"><label for="patient_code">Patient ID</label>
+      <input id="patient_code" type="text" name="patient_code" value="{{ v.patient_code if v else suggested_code }}" {% if v %}disabled{% endif %}></div>
+    <div class="field"><label for="full_name">Full name</label><input id="full_name" type="text" name="full_name" value="{{ v.full_name if v else '' }}" required></div>
+    <div class="field"><label for="phone">WhatsApp number</label><input id="phone" type="tel" name="phone" value="{{ v.phone if v else '' }}" placeholder="+91 98xxxxxxxx"></div>
+    <div class="field"><label for="email">Email</label><input id="email" type="email" name="email" value="{{ v.email if v else '' }}"></div>
+    <div class="field"><label for="dob">Date of birth</label><input id="dob" type="text" name="dob" value="{{ v.dob if v else '' }}" placeholder="DD/MM/YYYY"></div>
+    <div class="field"><label for="gender">Gender</label><input id="gender" type="text" name="gender" value="{{ v.gender if v else '' }}"></div>
+    <div class="field"><label for="hospital">Hospital</label><input id="hospital" type="text" name="hospital" value="{{ v.hospital if v else '' }}"></div>
+    <div class="field"><label for="insurer">Insurer / TPA</label><input id="insurer" type="text" name="insurer" value="{{ v.insurer if v else '' }}"></div>
+    <div class="field"><label for="policy_number">Policy number</label><input id="policy_number" type="text" name="policy_number" value="{{ v.policy_number if v else '' }}"></div>
+    <div class="field"><label for="claim_number">Claim number</label><input id="claim_number" type="text" name="claim_number" value="{{ v.claim_number if v else '' }}"></div>
+    <div class="field"><label for="admission_date">Admission date</label><input id="admission_date" type="text" name="admission_date" value="{{ v.admission_date if v else '' }}"></div>
+    <div class="field"><label for="discharge_date">Discharge date</label><input id="discharge_date" type="text" name="discharge_date" value="{{ v.discharge_date if v else '' }}"></div>
+    <div class="field"><label for="diagnosis">Diagnosis</label><input id="diagnosis" type="text" name="diagnosis" value="{{ v.diagnosis if v else '' }}"></div>
+    <div class="field"><label for="preferred_language">Preferred language</label><input id="preferred_language" type="text" name="preferred_language" value="{{ v.preferred_language if v else 'English' }}"></div>
+  </div>
+  {% if not patient %}
+  <div class="field"><label style="font-weight:500"><input type="checkbox" name="create_login" value="1" checked> Create a login so the patient can see their own locker</label></div>
+  {% endif %}
+  <button class="btn">{{ 'Save profile' if patient else 'Add patient' }}</button>
+</form>
+{% endblock %}

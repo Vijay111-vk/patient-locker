@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>Settings</h1><p class="sub">Message templates, connections and team accounts.</p></div></div>
+
+<section class="panel">
+  <header><h2>Connections</h2><small>Set these in the server’s .env file</small></header>
+  <dl class="facts">
+    {% for k, v in integrations.items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}
+    {% for k, v in overrides.items() %}{% if v %}<dt>{{ k }}</dt><dd>{{ v }} <span class="tag">all messages go here</span></dd>{% endif %}{% endfor %}
+  </dl>
+  {% if not wa_ok or not email_ok %}<p style="margin-top:.7rem"><small>Channels in test mode record the message in history but do not deliver it.</small></p>{% endif %}
+</section>
+
+<section class="panel" id="templates">
+  <header><h2>Message templates</h2><small>The system fills the {placeholders}; the rest of the text is sent exactly as written</small></header>
+  <form method="post" action="/settings/templates">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <div class="grid-2">
+      <div>
+        <div class="field"><label for="t1">When the patient must send something</label><textarea id="t1" name="message_template">{{ tpls.message_template }}</textarea></div>
+        <div class="field"><label for="t3">Email subject</label><input id="t3" type="text" name="email_subject" value="{{ tpls.email_subject.strip() }}"></div>
+        <div class="field"><label for="t2">When nothing is needed from the patient</label><textarea id="t2" name="message_template_no_action" style="min-height:10rem">{{ tpls.message_template_no_action }}</textarea></div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:.5rem">Placeholders</h3>
+        <dl class="facts">{% for k, v in placeholders.items() %}<dt><code>{{ '{' ~ k ~ '}' }}</code></dt><dd>{{ v }}</dd>{% endfor %}</dl>
+      </div>
+    </div>
+    <button class="btn">Save templates</button>
+  </form>
+</section>
+
+<section class="panel" id="users">
+  <header><h2>Team accounts</h2><small>Patient logins are created from the Add patient page</small></header>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr><td>{{ u.username }}</td><td>{{ u.full_name }}</td><td>{{ u.role }}</td><td>{{ 'Active' if u.is_active else 'Disabled' }}</td>
+      <td>{% if u.id != user.id %}<form method="post" action="/settings/users/{{ u.id }}/toggle"><input type="hidden" name="csrf_token" value="{{ csrf }}"><button class="btn ghost small">{{ 'Disable' if u.is_active else 'Enable' }}</button></form>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <form method="post" action="/settings/users" style="margin-top:1rem">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <div class="form-grid">
+      <div class="field"><label for="nu">Username</label><input id="nu" type="text" name="username" required></div>
+      <div class="field"><label for="nn">Name</label><input id="nn" type="text" name="full_name"></div>
+      <div class="field"><label for="nr">Role</label><select id="nr" name="role"><option value="staff">Staff (all patient lockers)</option><option value="admin">Admin (also settings and access log)</option></select></div>
+      <div class="field"><label for="np">Password (8+ characters)</label><input id="np" type="password" name="password" minlength="8" required autocomplete="new-password"></div>
+    </div>
+    <button class="btn ghost">Add team member</button>
+  </form>
+</section>
+{% endblock %}

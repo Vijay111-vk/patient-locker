@@ -1,0 +1,62 @@
+{# Shared documents block. Expects p, user, csrf, checklist. #}
+<section class="panel" id="documents">
+  <header>
+    <h2>Documents ({{ p.documents|length }})</h2>
+    <small>Sorted automatically by type{% if user.role != 'patient' %}; fix a type with the menu if needed{% endif %}</small>
+  </header>
+
+  <div class="checklist" aria-label="Standard claim documents">
+    {% for key, lbl, ds in checklist %}
+      <div class="check {{ 'have' if ds else 'missing' }}"><strong>{{ lbl }}</strong><span>{{ '✓ In locker' if ds else 'Not in locker' }}{% if ds|length > 1 %} ({{ ds|length }}){% endif %}</span></div>
+    {% endfor %}
+  </div>
+
+  <form class="drop" style="margin:1rem 0" method="post" action="/patients/{{ p.id }}/documents" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <p><b>Add documents</b> — PDF, photos, DOCX or TXT. You can pick several files at once.</p>
+    <div class="row">
+      <label class="sr-only" for="docfiles">Files</label>
+      <input id="docfiles" type="file" name="files" multiple required accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff,.txt,.docx">
+      {% if user.role != 'patient' %}
+      <label class="sr-only" for="doctype">Document type</label>
+      <select id="doctype" name="doc_type" class="compact">
+        <option value="">Detect type automatically</option>
+        {% for k, meta in DOC_TYPES.items() %}{% if k != 'query_letter' %}<option value="{{ k }}">{{ meta.label }}</option>{% endif %}{% endfor %}
+      </select>
+      {% endif %}
+      <button class="btn small">Upload</button>
+    </div>
+  </form>
+
+  <ul class="doclist">
+  {% for d in p.documents %}
+    <li>
+      <div>
+        <div class="name"><a href="/documents/{{ d.id }}/file" target="_blank" rel="noopener">{{ d.original_name }}</a></div>
+        <div class="meta">
+          {% if d.status == 'processing' %}<span class="pill processing">Reading</span>{% else %}<b>{{ d.doc_type | doc_label }}</b>{% if d.type_source == 'manual' %} <span class="tag">set by staff</span>{% endif %}{% endif %}
+          — {{ d.size_bytes | size }}, added {{ d.uploaded_at | local('%d %b %Y') }}{% if user.role != 'patient' %} by {{ d.uploaded_by }}{% endif %}
+        </div>
+        {% if d.summary and user.role != 'patient' %}<div class="summary">{{ d.summary[:260] }}{% if d.summary|length > 260 %}…{% endif %}</div>{% endif %}
+      </div>
+      {% if user.role != 'patient' %}
+      <div class="actions">
+        <form method="post" action="/documents/{{ d.id }}/type">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <label class="sr-only" for="t{{ d.id }}">Type for {{ d.original_name }}</label>
+          <select id="t{{ d.id }}" name="doc_type" class="compact" data-autosubmit>
+            {% for k, meta in DOC_TYPES.items() %}<option value="{{ k }}" {% if k == d.doc_type %}selected{% endif %}>{{ meta.label }}</option>{% endfor %}
+          </select>
+        </form>
+        <form method="post" action="/documents/{{ d.id }}/delete" data-confirm="Remove {{ d.original_name }} from the locker?">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <button class="btn danger small">Remove</button>
+        </form>
+      </div>
+      {% endif %}
+    </li>
+  {% else %}
+    <li><span class="empty">No documents yet.</span></li>
+  {% endfor %}
+  </ul>
+</section>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Patient Locker{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+{% if user %}
+<header class="topbar">
+  <div class="inner">
+    <a class="brand" href="/">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="#9fd0c8" stroke-width="2"/><path d="M3 9h18M9 4v5" stroke="#9fd0c8" stroke-width="2"/><circle cx="16" cy="14.5" r="1.6" fill="#9fd0c8"/></svg>
+      Patient Locker
+    </a>
+    <nav class="nav" aria-label="Main">
+      {% if user.role in ('admin', 'staff') %}
+        <a href="/dashboard" {% if request.url.path.startswith('/dashboard') %}class="on"{% endif %}>Patients</a>
+        <a href="/patients/new" {% if request.url.path == '/patients/new' %}class="on"{% endif %}>Add patient</a>
+      {% else %}
+        <a href="/patients/{{ user.patient_id }}" class="on">My locker</a>
+      {% endif %}
+      {% if user.role == 'admin' %}
+        <a href="/settings" {% if request.url.path.startswith('/settings') %}class="on"{% endif %}>Settings</a>
+        <a href="/audit" {% if request.url.path.startswith('/audit') %}class="on"{% endif %}>Access log</a>
+      {% endif %}
+    </nav>
+    <div class="who">
+      <a href="/account" style="color:inherit">{{ user.full_name or user.username }}</a>
+      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf }}"><button type="submit">Sign out</button></form>
+    </div>
+  </div>
+</header>
+{% endif %}
+<main>
+  {% for f in flashes %}<div class="flash {{ f.kind }}" role="status">{{ f.text }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

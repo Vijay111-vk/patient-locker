@@ -1,0 +1,23 @@
+{% macro status(s) -%}
+<span class="pill {{ s }}">{{ STATUS_TEXT.get(s, s) }}</span>
+{%- endmacro %}
+
+{% macro msgstatus(m) -%}
+{% if m.status == 'sent' %}<span class="pill sent">Delivered to provider</span>
+{% elif m.status == 'simulated' %}<span class="pill simulated">Not sent (test mode)</span>
+{% else %}<span class="pill failed">Failed</span>{% endif %}
+{%- endmacro %}
+
+{% macro message_card(m, show_recipient=True) -%}
+<article class="msg">
+  <header>
+    <span><b>{{ 'WhatsApp' if m.channel == 'whatsapp' else 'Email' }}</b>
+      {% if show_recipient %}to {{ (m.recipient | mask_phone) if m.channel == 'whatsapp' else (m.recipient | mask_email) }}{% endif %}
+      <small>{{ m.created_at | local }}</small></span>
+    {{ msgstatus(m) }}
+  </header>
+  {% if m.subject %}<div style="padding:.5rem .8rem 0"><b>{{ m.subject }}</b></div>{% endif %}
+  <pre>{{ m.body }}</pre>
+  {% if m.error %}<div class="err">{{ m.error }}</div>{% endif %}
+</article>
+{%- endmacro %}

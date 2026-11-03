@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Access log{% endblock %}
+{% block content %}
+<div class="pagehead"><div><h1>Access log</h1><p class="sub">Who opened, uploaded or sent what. Latest 400 entries{% if patient_id %} for {{ names.get(patient_id, 'this patient') }} (<a href="/audit">show all</a>){% endif %}.</p></div></div>
+<section class="panel"><div class="table-wrap"><table>
+  <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Patient</th><th>Detail</th><th>IP</th></tr></thead>
+  <tbody>
+  {% for e in entries %}
+    <tr><td>{{ e.at | local('%d %b, %I:%M:%S %p') }}</td><td>{{ e.username }} <small>({{ e.role }})</small></td><td>{{ e.action.replace('_', ' ') }}</td>
+    <td>{% if e.patient_id %}<a href="/audit?patient_id={{ e.patient_id }}">{{ names.get(e.patient_id, e.patient_id) }}</a>{% endif %}</td><td><small>{{ e.target }}</small></td><td><small>{{ e.ip }}</small></td></tr>
+  {% else %}<tr><td colspan="6" class="empty">Nothing logged yet.</td></tr>{% endfor %}
+  </tbody>
+</table></div></section>
+{% endblock %}

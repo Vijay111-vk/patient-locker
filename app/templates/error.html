@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login">
+  <h1>{% if code == 404 %}Not found{% elif code == 403 %}Not allowed{% else %}Something needs fixing{% endif %}</h1>
+  <p>{{ detail }}</p>
+  <p><a href="/">Go to the start page</a></p>
+</div>
+{% endblock %}
