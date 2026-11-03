@@ -14,4 +14,4 @@ USER appuser
 ENV DATA_DIR=/data PYTHONUNBUFFERED=1
 VOLUME ["/data"]
 EXPOSE 8000
-CMD ["./scripts/start.sh"]
+CMD ["sh", "scripts/start.sh"]
