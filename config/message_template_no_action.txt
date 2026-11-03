@@ -1,0 +1,11 @@
+Dear {patient_name},
+
+Your insurance company ({insurer_name}) has sent a query on your claim {claim_number} (Patient ID: {patient_id}).
+
+Good news: we already have everything needed to answer it, so you do not need to send anything. We are replying to the insurer on your behalf:
+{available_list}
+
+You can track your claim here: {portal_link}
+
+Thank you,
+{team_name}

@@ -1,0 +1,15 @@
+Dear {patient_name},
+
+Your insurance company ({insurer_name}) has sent a query on your claim {claim_number} (Patient ID: {patient_id}). To move your claim forward, we need the following from you:
+
+{needed_list}
+
+You do not need to send these again, we already have them:
+{available_list}
+
+Please send the above {deadline}. You can upload photos or PDFs to your secure locker here: {portal_link}
+
+If anything is unclear, {team_contact}.
+
+Thank you,
+{team_name}

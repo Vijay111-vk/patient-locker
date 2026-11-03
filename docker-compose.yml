@@ -1,0 +1,13 @@
+services:
+  locker:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      SEED_ON_START: "true"
+    volumes:
+      - locker-data:/data
+    restart: unless-stopped
+volumes:
+  locker-data:
